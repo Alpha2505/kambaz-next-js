@@ -19,7 +19,7 @@ export default async function Assignments({
         <div className="position-relative" style={{ width: "300px" }}>
           <FaSearch className="position-absolute" style={{ left: "10px", top: "50%", transform: "translateY(-50%)", color: "#6c757d" }} />
           <input 
-            placeholder="Search for Assignments"
+            placeholder="Search..."
             id="wd-search-assignment"
             className="form-control ps-5"
           />
@@ -60,12 +60,12 @@ export default async function Assignments({
           <BsGripVertical className="me-2 fs-3 mt-1" />
           <MdOutlineAssignment className="me-3 fs-3 text-success mt-1" />
           <div className="flex-grow-1">
-            <Link href={`/Courses/${cid}/Assignments/123`} className="wd-assignment-link text-decoration-none fw-bold text-dark">
+            <Link href={`/Courses/${cid}/Assignments/123`} className="wd-assignment-link text-decoration-none fs-5 fw-bold text-dark">
               A1
             </Link>
             <div className="small">
-              <span className="text-danger">Multiple Modules</span> | <span className="text-secondary">Not available until</span> May 6 at 12:00am<br />
-              <span className="text-secondary">Due</span> May 13 at 11:59pm | 100 pts
+              <span className="text-danger fs-7">Multiple Modules</span> | <span className="fw-bold fs-7">Not available until</span> May 6 at 12:00am<br />
+              <span className="fw-bold fs-7">Due</span> May 13 at 11:59pm | 100 pts
             </div>
           </div>
           <FaCheckCircle className="text-success me-2 fs-5" />
@@ -76,12 +76,12 @@ export default async function Assignments({
           <BsGripVertical className="me-2 fs-3 mt-1" />
           <MdOutlineAssignment className="me-3 fs-3 text-success mt-1" />
           <div className="flex-grow-1">
-            <Link href={`/Courses/${cid}/Assignments/124`} className="wd-assignment-link text-decoration-none fw-bold text-dark">
+            <Link href={`/Courses/${cid}/Assignments/124`} className="wd-assignment-link text-decoration-none fs-5 fw-bold text-dark">
               A2
             </Link>
             <div className="small">
-              <span className="text-danger">Multiple Modules</span> | <span className="text-secondary">Not available until</span> May 13 at 12:00am<br />
-              <span className="text-secondary">Due</span> May 20 at 11:59pm | 100 pts
+              <span className="text-danger fs-7">Multiple Modules</span> | <span className="fw-bold fs-7">Not available until</span> May 13 at 12:00am<br />
+              <span className="fw-bold fs-7">Due</span> May 20 at 11:59pm | 100 pts
             </div>
           </div>
           <FaCheckCircle className="text-success me-2 fs-5" />
@@ -92,12 +92,12 @@ export default async function Assignments({
           <BsGripVertical className="me-2 fs-3 mt-1" />
           <MdOutlineAssignment className="me-3 fs-3 text-success mt-1" />
           <div className="flex-grow-1">
-            <Link href={`/Courses/${cid}/Assignments/125`} className="wd-assignment-link text-decoration-none fw-bold text-dark">
+            <Link href={`/Courses/${cid}/Assignments/125`} className="wd-assignment-link text-decoration-none fs-5 fw-bold text-dark">
               A3
             </Link>
             <div className="small">
-              <span className="text-danger">Multiple Modules</span> | <span className="text-secondary">Not available until</span> May 20 at 12:00am<br />
-              <span className="text-secondary">Due</span> May 27 at 11:59pm | 100 pts
+              <span className="text-danger fs-7">Multiple Modules</span> | <span className="fw-bold fs-7">Not available until</span> May 20 at 12:00am<br />
+              <span className="fw-bold fs-7">Due</span> May 27 at 11:59pm | 100 pts
             </div>
           </div>
           <FaCheckCircle className="text-success me-2 fs-5" />
