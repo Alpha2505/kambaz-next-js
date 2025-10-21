@@ -2,6 +2,9 @@
 
 import { Form, Button, Row, Col } from "react-bootstrap";
 import { useState } from "react";
+import { useParams } from "next/navigation";
+import * as db from "../../../../Database";
+import Link from "next/link";
 
 interface Option {
   value: string;
@@ -9,6 +12,9 @@ interface Option {
 }
 
 export default function AssignmentEditor() {
+  const { cid, aid } = useParams();
+  const assignment = db.assignments.find((a: any) => a._id === aid);
+  
   const [selectedOptions, setSelectedOptions] = useState<string[]>(["everyone"]);
   
   const options: Option[] = [
@@ -34,12 +40,27 @@ export default function AssignmentEditor() {
     return option ? option.label : value;
   };
 
+  // Format date for datetime-local input (YYYY-MM-DDTHH:MM)
+  const formatDateForInput = (dateString: string) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   return (
     <div id="wd-assignments-editor" className="p-4">
       <Form>
         <div className="mb-3">
           <Form.Label htmlFor="wd-name">Assignment Name</Form.Label>
-          <Form.Control id="wd-name" type="text" defaultValue="A1 - ENV + HTML" />
+          <Form.Control 
+            id="wd-name" 
+            type="text" 
+            defaultValue={assignment?.title || ""} 
+          />
         </div>
 
         <div className="mb-3">
@@ -47,18 +68,7 @@ export default function AssignmentEditor() {
             as="textarea" 
             id="wd-description" 
             rows={9}
-            defaultValue={`The assignment is available online
-
-Submit a link to the landing page of your Web application running on Netflix.
-
-The landing page should include the following:
-
-- Your full name and section
-- Links to each of the lab assignments
-- Link to the Kanbas application
-- Links to all relevant source code repositories
-
-The Kanbas application should include a link to navigate back to the landing page.`}
+            defaultValue={assignment?.description || ""}
           />
         </div>
 
@@ -67,7 +77,11 @@ The Kanbas application should include a link to navigate back to the landing pag
             Points
           </Form.Label>
           <Col sm={9}>
-            <Form.Control id="wd-points" type="number" defaultValue={100} />
+            <Form.Control 
+              id="wd-points" 
+              type="number" 
+              defaultValue={assignment?.points || 100} 
+            />
           </Col>
         </Row>
 
@@ -195,20 +209,33 @@ The Kanbas application should include a link to navigate back to the landing pag
               <Form.Label htmlFor="wd-due-date" className="fw-bold">
                 Due
               </Form.Label>
-              <Form.Control id="wd-due-date" type="datetime-local" defaultValue="2024-05-13T23:59" className="mb-3" />
+              <Form.Control 
+                id="wd-due-date" 
+                type="datetime-local" 
+                defaultValue={assignment ? formatDateForInput(assignment.availableUntil) : ""} 
+                className="mb-3" 
+              />
 
               <Row>
                 <Col>
                   <Form.Label htmlFor="wd-available-from" className="fw-bold">
                     Available from
                   </Form.Label>
-                  <Form.Control id="wd-available-from" type="datetime-local" defaultValue="2024-05-06T00:00" />
+                  <Form.Control 
+                    id="wd-available-from" 
+                    type="datetime-local" 
+                    defaultValue={assignment ? formatDateForInput(assignment.availableFrom) : ""} 
+                  />
                 </Col>
                 <Col>
                   <Form.Label htmlFor="wd-available-until" className="fw-bold">
                     Until
                   </Form.Label>
-                  <Form.Control id="wd-available-until" type="datetime-local" defaultValue="2024-05-20T23:59" />
+                  <Form.Control 
+                    id="wd-available-until" 
+                    type="datetime-local" 
+                    defaultValue={assignment ? formatDateForInput(assignment.availableUntil) : ""} 
+                  />
                 </Col>
               </Row>
             </div>
@@ -218,8 +245,12 @@ The Kanbas application should include a link to navigate back to the landing pag
         <hr />
         
         <div className="d-flex justify-content-end">
-          <Button variant="secondary" className="me-2">Cancel</Button>
-          <Button variant="danger">Save</Button>
+          <Link href={`/Courses/${cid}/Assignments`}>
+    <Button variant="secondary"  className="me-2">Cancel</Button>
+  </Link>
+           <Link href={`/Courses/${cid}/Assignments`}>
+    <Button variant="danger">Save</Button>
+  </Link>
         </div>
       </Form>
     </div>

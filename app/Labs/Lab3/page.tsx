@@ -28,7 +28,6 @@ import Styles from "./Styles";
 import Add from "./Add";
 import Square from "./Square";
 import Highlight from "./Highlight";
-import AddPathParameters from "@/app/Labs/Lab3/add/[a]/[b]/page";
 import PathParameters from "./PathParameters";
 import TodoItem from "./todos/TodoItem";
 import TodoList from "./todos/TodoList";
@@ -37,8 +36,7 @@ export default function Lab3() {
     console.log('Hello World!');
   return (
     <div id="wd-lab3">
-      <h3>Lab 3</h3>
-      <div>Fix the addition Page</div>
+      <h3>Lab 3 - Javascript</h3>
       <VariablesAndConstants />
       <VariableTypes />
       <BooleanVariables />
@@ -76,7 +74,6 @@ export default function Lab3() {
         excepturi consectetur. Modi omnis minus sequi maiores, provident
         voluptates.
       </Highlight>
-      <AddPathParameters/>
       <PathParameters/>
       <TodoItem/>
       <TodoList/>
