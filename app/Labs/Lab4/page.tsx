@@ -11,11 +11,14 @@ import ObjectStateVariable from "./ObjectStateVariable";
 import ArrayStateVariable from "./ArrayStateVariable";
 import ParentStateComponent from "./ParentStateComponent";
 import ReduxExamples from "./ReduxExamples";
+import store from "./store";
+import { Provider } from "react-redux";
 export default function Lab4() {
   function sayHello() {
     alert("Hello");
   }
   return (
+    <Provider store={store}>
     <div id="wd-lab4">
       <h3>Lab 4 - Maintaining State in React Applications</h3>
       <ClickEvent />
@@ -31,5 +34,6 @@ export default function Lab4() {
       <ParentStateComponent />
       <ReduxExamples />
     </div>
+    </Provider>
   );
 }
