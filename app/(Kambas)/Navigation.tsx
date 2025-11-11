@@ -1,5 +1,4 @@
 "use client";
-
 import { usePathname } from "next/navigation";
 import { AiOutlineDashboard } from "react-icons/ai";
 import { IoCalendarOutline } from "react-icons/io5";
@@ -12,12 +11,11 @@ export default function KambazNavigation() {
   const pathname = usePathname();
   const links = [
     { label: "Dashboard", path: "/Dashboard", icon: AiOutlineDashboard },
-    { label: "Courses",   path: "/Dashboard", icon: LiaBookSolid },
-    { label: "Calendar",  path: "/Calendar",  icon: IoCalendarOutline },
-    { label: "Inbox",     path: "/Inbox",     icon: FaInbox },
-    { label: "Labs",      path: "/Labs",      icon: LiaCogSolid },
+    { label: "Courses", path: "/Dashboard", icon: LiaBookSolid },
+    { label: "Calendar", path: "/Calendar", icon: IoCalendarOutline },
+    { label: "Inbox", path: "/Inbox", icon: FaInbox },
+    { label: "Labs", path: "/Labs", icon: LiaCogSolid },
   ];
-
 
   // Make Account the default when visiting /Kambaz or /
   const effectivePath =
@@ -40,22 +38,29 @@ export default function KambazNavigation() {
         <img src="/images/NEU.png" width="75px" alt="Northeastern University" />
       </ListGroupItem>
       <br />
-
-
-
-<ListGroupItem as={Link} href="/Account"
-        className={`text-center border-0 bg-black
-            ${pathname.includes("Account") ? "bg-white text-danger" : "bg-black text-white"}`}>
+      
+      {/* Account Link */}
+      <ListGroupItem
+        as={Link}
+        href="/Account"
+        className={`text-center border-0 bg-black ${pathname.includes("Account") ? "bg-white text-danger" : "bg-black text-white"}`}
+      >
         <FaRegCircleUser
-          className={`fs-1 ${pathname.includes("Account") ? "text-danger" : "text-white"}`} />
+          className={`fs-1 ${pathname.includes("Account") ? "text-danger" : "text-white"}`}
+        />
         <br />
         Account
       </ListGroupItem>
+
+      {/* Navigation Links - Use label as key instead of path */}
       {links.map((link) => (
-        <ListGroupItem key={link.path} as={Link} href={link.path}
-          className={`bg-black text-center border-0
-              ${pathname.includes(link.label) ? "text-danger bg-white" : "text-white bg-black"}`}>
-          {link.icon({ className: "fs-1 text-danger"})}
+        <ListGroupItem
+          key={link.label}
+          as={Link}
+          href={link.path}
+          className={`bg-black text-center border-0 ${pathname.includes(link.label) ? "text-danger bg-white" : "text-white bg-black"}`}
+        >
+          {link.icon({ className: "fs-1 text-danger" })}
           <br />
           {link.label}
         </ListGroupItem>

@@ -1,258 +1,245 @@
 "use client";
 
-import { Form, Button, Row, Col } from "react-bootstrap";
-import { useState } from "react";
-import { useParams } from "next/navigation";
-import * as db from "../../../../Database";
-import Link from "next/link";
-
-interface Option {
-  value: string;
-  label: string;
-}
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
+import { addAssignment, updateAssignment } from "../reducer";
+import { RootState } from "../../../../store";
 
 export default function AssignmentEditor() {
   const { cid, aid } = useParams();
-  const assignment = db.assignments.find((a: any) => a._id === aid);
+  const router = useRouter();
+  const { assignments } = useSelector((state: RootState) => state.assignmentsReducer);
+  const { currentUser } = useSelector((state: RootState) => state.accountReducer);
+  const dispatch = useDispatch();
   
-  const [selectedOptions, setSelectedOptions] = useState<string[]>(["everyone"]);
+  const isFaculty = currentUser?.role === "FACULTY";
+  const isNewAssignment = aid === "new";
+  const existingAssignment = !isNewAssignment 
+    ? assignments.find((a: any) => a._id === aid)
+    : null;
   
-  const options: Option[] = [
-    { value: "everyone", label: "Everyone" },
-    { value: "section101", label: "Section 101" },
-    { value: "section102", label: "Section 102" },
-    { value: "groupA", label: "Group A" },
-    { value: "groupB", label: "Group B" },
-    { value: "individual", label: "Individual Students" }
-  ];
+  const [assignment, setAssignment] = useState<any>(
+    existingAssignment || {
+      title: "New Assignment",
+      description: "New Assignment Description",
+      points: 100,
+      dueDate: "2024-05-13",
+      availableFromDate: "2024-05-06",
+      availableUntilDate: "2024-05-20",
+      course: cid,
+    }
+  );
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedValues = Array.from(e.target.selectedOptions, (option: HTMLOptionElement) => option.value);
-    setSelectedOptions(selectedValues);
+  useEffect(() => {
+    if (!isFaculty) {
+      router.push(`/Courses/${cid}/Assignments`);
+      return;
+    }
+    if (existingAssignment) {
+      setAssignment(existingAssignment);
+    }
+  }, [existingAssignment, isFaculty, router, cid]);
+
+  const handleSave = () => {
+    if (!isFaculty) {
+      alert("Only faculty members can edit assignments.");
+      return;
+    }
+    
+    if (isNewAssignment) {
+      dispatch(addAssignment({
+        title: assignment.title,
+        description: assignment.description,
+        points: assignment.points,
+        dueDate: assignment.dueDate,
+        availableFromDate: assignment.availableFromDate,
+        availableUntilDate: assignment.availableUntilDate,
+        course: cid,
+      }));
+    } else {
+      dispatch(updateAssignment(assignment));
+    }
+    router.push(`/Courses/${cid}/Assignments`);
   };
 
-  const removeOption = (valueToRemove: string) => {
-    setSelectedOptions(selectedOptions.filter(value => value !== valueToRemove));
+  const handleCancel = () => {
+    router.push(`/Courses/${cid}/Assignments`);
   };
 
-  const getOptionLabel = (value: string) => {
-    const option = options.find(opt => opt.value === value);
-    return option ? option.label : value;
-  };
-
-  // Format date for datetime-local input (YYYY-MM-DDTHH:MM)
-  const formatDateForInput = (dateString: string) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
+  if (!isFaculty) {
+    return (
+      <div style={{ padding: "20px" }}>
+        <div style={{ backgroundColor: "#f8d7da", border: "1px solid #f5c6cb", padding: "15px", borderRadius: "4px", color: "#721c24" }}>
+          Only faculty members can create or edit assignments.
+        </div>
+        <button onClick={handleCancel} style={{ marginTop: "10px", padding: "8px 16px", backgroundColor: "#007bff", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>
+          Return to Assignments
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div id="wd-assignments-editor" className="p-4">
-      <Form>
-        <div className="mb-3">
-          <Form.Label htmlFor="wd-name">Assignment Name</Form.Label>
-          <Form.Control 
-            id="wd-name" 
-            type="text" 
-            defaultValue={assignment?.title || ""} 
-          />
-        </div>
+    <div style={{ padding: "40px", maxWidth: "1000px", margin: "0 auto" }}>
+      {/* Assignment Name */}
+      <div style={{ marginBottom: "25px" }}>
+        <label style={{ display: "block", marginBottom: "8px", fontSize: "14px" }}>
+          Assignment Name
+        </label>
+        <input
+          type="text"
+          value={assignment.title}
+          onChange={(e) => setAssignment({ ...assignment, title: e.target.value })}
+          style={{
+            width: "100%",
+            padding: "10px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            fontSize: "16px"
+          }}
+        />
+      </div>
 
-        <div className="mb-3">
-          <Form.Control 
-            as="textarea" 
-            id="wd-description" 
-            rows={9}
-            defaultValue={assignment?.description || ""}
-          />
-        </div>
+      {/* Description - NO LABEL */}
+      <div style={{ marginBottom: "25px" }}>
+        <textarea
+          value={assignment.description}
+          onChange={(e) => setAssignment({ ...assignment, description: e.target.value })}
+          rows={6}
+          style={{
+            width: "100%",
+            padding: "10px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            fontSize: "16px"
+          }}
+        />
+      </div>
 
-        <Row className="mb-3">
-          <Form.Label column sm={3} htmlFor="wd-points" className="text-end">
-            Points
-          </Form.Label>
-          <Col sm={9}>
-            <Form.Control 
-              id="wd-points" 
-              type="number" 
-              defaultValue={assignment?.points || 100} 
+      {/* Points - HORIZONTAL LAYOUT */}
+      <div style={{ display: "flex", alignItems: "center", marginBottom: "25px" }}>
+        <label style={{ width: "220px", textAlign: "right", paddingRight: "15px", fontSize: "14px" }}>
+          Points
+        </label>
+        <input
+          type="number"
+          value={assignment.points}
+          onChange={(e) => setAssignment({ ...assignment, points: parseInt(e.target.value) || 0 })}
+          style={{
+            flex: 1,
+            padding: "10px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            fontSize: "16px"
+          }}
+        />
+      </div>
+
+      {/* Assign Section - HORIZONTAL WITH BORDERED BOX */}
+      <div style={{ display: "flex", alignItems: "flex-start", marginBottom: "30px" }}>
+        <label style={{ width: "220px", textAlign: "right", paddingRight: "15px", paddingTop: "15px", fontSize: "14px" }}>
+          Assign
+        </label>
+        <div style={{ 
+          flex: 1,
+          border: "1px solid #ccc",
+          borderRadius: "4px",
+          padding: "25px",
+          backgroundColor: "#fff"
+        }}>
+          {/* Due Date */}
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>
+              Due
+            </label>
+            <input
+              type="date"
+              value={assignment.dueDate}
+              onChange={(e) => setAssignment({ ...assignment, dueDate: e.target.value })}
+              style={{
+                width: "100%",
+                padding: "10px",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+                fontSize: "16px"
+              }}
             />
-          </Col>
-        </Row>
+          </div>
 
-        <Row className="mb-3">
-          <Form.Label column sm={3} htmlFor="wd-group" className="text-end">
-            Assignment Group
-          </Form.Label>
-          <Col sm={9}>
-            <Form.Select id="wd-group">
-              <option value="ASSIGNMENTS">ASSIGNMENTS</option>
-            </Form.Select>
-          </Col>
-        </Row>
-
-        <Row className="mb-3">
-          <Form.Label column sm={3} htmlFor="wd-display-grade-as" className="text-end">
-            Display Grade as
-          </Form.Label>
-          <Col sm={9}>
-            <Form.Select id="wd-display-grade-as">
-              <option value="Percentage">Percentage</option>
-              <option value="Points">Points</option>
-              <option value="Letter">Letter Grade</option>
-            </Form.Select>
-          </Col>
-        </Row>
-
-        <Row className="mb-3">
-          <Form.Label column sm={3} htmlFor="wd-submission-type" className="text-end">
-            Submission Type
-          </Form.Label>
-          <Col sm={9}>
-            <div className="border rounded p-3">
-              <Form.Select id="wd-submission-type" className="mb-3">
-                <option value="Online">Online</option>
-                <option value="Paper">Paper</option>
-                <option value="External Tool">External Tool</option>
-              </Form.Select>
-
-              <Form.Label className="fw-bold">Online Entry Options</Form.Label>
-              
-              <Form.Check 
-                type="checkbox" 
-                id="wd-text-entry" 
-                label="Text Entry" 
-              />
-              
-              <Form.Check 
-                type="checkbox" 
-                id="wd-website-url" 
-                label="Website URL" 
-              />
-              
-              <Form.Check 
-                type="checkbox" 
-                id="wd-media-recordings" 
-                label="Media Recordings" 
-              />
-              
-              <Form.Check 
-                type="checkbox" 
-                id="wd-student-annotation" 
-                label="Student Annotation" 
-              />
-              
-              <Form.Check 
-                type="checkbox" 
-                id="wd-file-upload" 
-                label="File Uploads" 
+          {/* Available from and Until - SIDE BY SIDE */}
+          <div style={{ display: "flex", gap: "20px" }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>
+                Available from
+              </label>
+              <input
+                type="date"
+                value={assignment.availableFromDate}
+                onChange={(e) => setAssignment({ ...assignment, availableFromDate: e.target.value })}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  fontSize: "16px"
+                }}
               />
             </div>
-          </Col>
-        </Row>
-
-        <Row className="mb-3">
-          <Form.Label column sm={3} htmlFor="wd-assign-to" className="text-end">
-            Assign
-          </Form.Label>
-          <Col sm={9}>
-            <div className="border rounded p-3">
-              <Form.Label className="fw-bold">
-                Assign to
-              </Form.Label>
-              
-              {/* Custom Multi-select Component */}
-              <div className="mb-3">
-                {/* Selected Tags Display */}
-                <div className="border rounded p-2 mb-2 bg-light min-h-38">
-                  {selectedOptions.map(value => (
-                    <span 
-                      key={value} 
-                      className="badge bg-secondary me-1 mb-1 d-inline-flex align-items-center"
-                    >
-                      {getOptionLabel(value)}
-                      <button 
-                        type="button" 
-                        className="btn-close btn-close-white ms-1" 
-                        style={{fontSize: '0.6rem'}} 
-                        aria-label={`Remove ${getOptionLabel(value)}`}
-                        onClick={() => removeOption(value)}
-                      ></button>
-                    </span>
-                  ))}
-                  {selectedOptions.length === 0 && (
-                    <span className="text-muted">No options selected</span>
-                  )}
-                </div>
-                
-                {/* Multi-select dropdown */}
-                <Form.Select 
-                  multiple 
-                  value={selectedOptions}
-                  onChange={handleSelectChange}
-                  size="lg"
-                  className="form-control"
-                >
-                  {options.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </div>
-
-              <Form.Label htmlFor="wd-due-date" className="fw-bold">
-                Due
-              </Form.Label>
-              <Form.Control 
-                id="wd-due-date" 
-                type="datetime-local" 
-                defaultValue={assignment ? formatDateForInput(assignment.availableUntil) : ""} 
-                className="mb-3" 
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>
+                Until
+              </label>
+              <input
+                type="date"
+                value={assignment.availableUntilDate}
+                onChange={(e) => setAssignment({ ...assignment, availableUntilDate: e.target.value })}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  fontSize: "16px"
+                }}
               />
-
-              <Row>
-                <Col>
-                  <Form.Label htmlFor="wd-available-from" className="fw-bold">
-                    Available from
-                  </Form.Label>
-                  <Form.Control 
-                    id="wd-available-from" 
-                    type="datetime-local" 
-                    defaultValue={assignment ? formatDateForInput(assignment.availableFrom) : ""} 
-                  />
-                </Col>
-                <Col>
-                  <Form.Label htmlFor="wd-available-until" className="fw-bold">
-                    Until
-                  </Form.Label>
-                  <Form.Control 
-                    id="wd-available-until" 
-                    type="datetime-local" 
-                    defaultValue={assignment ? formatDateForInput(assignment.availableUntil) : ""} 
-                  />
-                </Col>
-              </Row>
             </div>
-          </Col>
-        </Row>
-
-        <hr />
-        
-        <div className="d-flex justify-content-end">
-          <Link href={`/Courses/${cid}/Assignments`}>
-    <Button variant="secondary"  className="me-2">Cancel</Button>
-  </Link>
-           <Link href={`/Courses/${cid}/Assignments`}>
-    <Button variant="danger">Save</Button>
-  </Link>
+          </div>
         </div>
-      </Form>
+      </div>
+
+      <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "30px 0" }} />
+
+      {/* Buttons */}
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+        <button
+          onClick={handleCancel}
+          style={{
+            padding: "10px 25px",
+            fontSize: "16px",
+            backgroundColor: "#6c757d",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSave}
+          style={{
+            padding: "10px 25px",
+            fontSize: "16px",
+            backgroundColor: "#dc3545",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Save
+        </button>
+      </div>
     </div>
   );
 }
