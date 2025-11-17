@@ -1,8 +1,11 @@
 "use client";
+import HttpClient from "./HttpClient";
 import EnvironmentVariables from "./EnvironmentVariables";
 import PathParameters from "./PathParameters";
 import QueryParameters from "./QueryParameters";
 import WorkingWithObjects from "./WorkingWithObjects";
+import WorkingWithArrays from "./WorkingWithArrays";
+import WorkingWithObjectsAsynchronously from "./WorkingWithObjectsAsynchronously";
 const HTTP_SERVER = process.env.NEXT_PUBLIC_HTTP_SERVER;
 export default function Lab5() {
   return (
@@ -13,9 +16,12 @@ export default function Lab5() {
           Welcome
         </a>
       </div><hr />
+      <HttpClient />
       <EnvironmentVariables />
       <PathParameters />
       <QueryParameters />
       <WorkingWithObjects />
+      <WorkingWithArrays />
+      <WorkingWithObjectsAsynchronously />
     </div>
 );}
