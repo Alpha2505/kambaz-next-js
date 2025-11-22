@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
-import { deleteAssignment } from "./reducer";
+import { setAssignments, deleteAssignment } from "./reducer";
 import { RootState } from "../../../store";
 import { BsGripVertical, BsPlus } from "react-icons/bs";
 import { FaSearch, FaCaretDown, FaTrash } from "react-icons/fa";
@@ -10,10 +10,12 @@ import { IoEllipsisVertical } from "react-icons/io5";
 import { FaCheckCircle } from "react-icons/fa";
 import { MdOutlineAssignment } from "react-icons/md";
 import { Modal, Button } from "react-bootstrap";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import * as coursesClient from "../../client";
 
 export default function Assignments() {
-  const { cid } = useParams();
+  const params = useParams();
+  const cid = Array.isArray(params.cid) ? params.cid[0] : params.cid || "";
   const router = useRouter();
   const { assignments } = useSelector((state: RootState) => state.assignmentsReducer);
   const { currentUser } = useSelector((state: RootState) => state.accountReducer);
@@ -25,11 +27,22 @@ export default function Assignments() {
   // Check if current user is faculty
   const isFaculty = (currentUser as any)?.role === "FACULTY";
 
+  // Fetch assignments from server
+  const fetchAssignments = async () => {
+    const assignments = await coursesClient.findAssignmentsForCourse(cid);
+    dispatch(setAssignments(assignments));
+  };
+
+  useEffect(() => {
+    fetchAssignments();
+  }, []);
+
   // Filter assignments for this course
   const courseAssignments = assignments.filter((assignment: any) => assignment.course === cid);
 
   // Function to format date
   const formatDate = (dateString: string) => {
+    if (!dateString) return "No date";
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = { 
       month: 'short', 
@@ -50,9 +63,14 @@ export default function Assignments() {
     setShowDeleteDialog(true);
   };
 
+  const onRemoveAssignment = async (assignmentId: string) => {
+    await coursesClient.deleteAssignment(assignmentId);
+    dispatch(setAssignments(assignments.filter((a: any) => a._id !== assignmentId)));
+  };
+
   const handleConfirmDelete = () => {
     if (assignmentToDelete) {
-      dispatch(deleteAssignment(assignmentToDelete));
+      onRemoveAssignment(assignmentToDelete);
     }
     setShowDeleteDialog(false);
     setAssignmentToDelete(null);
@@ -144,12 +162,8 @@ export default function Assignments() {
               <BsGripVertical className="me-2 fs-3 mt-1" />
               <MdOutlineAssignment className="me-3 fs-3 text-success mt-1" />
               <div className="flex-grow-1">
-                {/* Faculty: clickable link to edit; Students: just clickable link to view */}
                 <Link 
-                  href={isFaculty 
-                    ? `/Courses/${cid}/Assignments/${assignment._id}` 
-                    : `/Courses/${cid}/Assignments/${assignment._id}`
-                  } 
+                  href={`/Courses/${cid}/Assignments/${assignment._id}`} 
                   className="wd-assignment-link text-decoration-none fs-5 fw-bold text-dark"
                 >
                   {assignment.title}

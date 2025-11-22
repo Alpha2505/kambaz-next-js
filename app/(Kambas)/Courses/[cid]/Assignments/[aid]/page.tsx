@@ -3,11 +3,14 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
-import { addAssignment, updateAssignment } from "../reducer";
+import { setAssignments } from "../reducer";
 import { RootState } from "../../../../store";
+import * as coursesClient from "../../../client";
 
 export default function AssignmentEditor() {
-  const { cid, aid } = useParams();
+  const params = useParams();
+  const cid = Array.isArray(params.cid) ? params.cid[0] : params.cid || "";
+  const aid = Array.isArray(params.aid) ? params.aid[0] : params.aid || "";
   const router = useRouter();
   const { assignments } = useSelector((state: RootState) => state.assignmentsReducer);
   const { currentUser } = useSelector((state: RootState) => state.accountReducer);
@@ -41,26 +44,30 @@ export default function AssignmentEditor() {
     }
   }, [existingAssignment, isFaculty, router, cid]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!isFaculty) {
       alert("Only faculty members can edit assignments.");
       return;
     }
     
-    if (isNewAssignment) {
-      dispatch(addAssignment({
-        title: assignment.title,
-        description: assignment.description,
-        points: assignment.points,
-        dueDate: assignment.dueDate,
-        availableFromDate: assignment.availableFromDate,
-        availableUntilDate: assignment.availableUntilDate,
-        course: cid,
-      }));
-    } else {
-      dispatch(updateAssignment(assignment));
+    try {
+      if (isNewAssignment) {
+        // Create new assignment on server
+        const newAssignment = await coursesClient.createAssignmentForCourse(cid, assignment);
+        dispatch(setAssignments([...assignments, newAssignment]));
+      } else {
+        // Update existing assignment on server
+        const updatedAssignment = await coursesClient.updateAssignment(assignment);
+        const newAssignments = assignments.map((a: any) => 
+          a._id === updatedAssignment._id ? updatedAssignment : a
+        );
+        dispatch(setAssignments(newAssignments));
+      }
+      router.push(`/Courses/${cid}/Assignments`);
+    } catch (error) {
+      console.error("Failed to save assignment:", error);
+      alert("Failed to save assignment. Please try again.");
     }
-    router.push(`/Courses/${cid}/Assignments`);
   };
 
   const handleCancel = () => {

@@ -4,6 +4,7 @@ const HTTP_SERVER = process.env.NEXT_PUBLIC_HTTP_SERVER;
 export default function PathParameters() {
   const [a, setA] = useState("34");
   const [b, setB] = useState("23");
+  console.log(process);
   return (
     <div>
       <h3>Path Parameters</h3>
