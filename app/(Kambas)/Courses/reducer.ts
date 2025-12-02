@@ -1,10 +1,8 @@
 "use client";
 import { createSlice } from "@reduxjs/toolkit";
-import { courses } from "../Database";
-import { v4 as uuidv4 } from "uuid";
 
 const initialState = {
-  courses: courses,
+  courses: [] as any[], // Changed from hardcoded to empty array
 };
 
 const coursesSlice = createSlice({
@@ -15,8 +13,7 @@ const coursesSlice = createSlice({
       state.courses = courses;
     },
     addNewCourse: (state, { payload: course }) => {
-      const newCourse = { ...course, _id: uuidv4() };
-      state.courses = [...state.courses, newCourse] as any;
+      state.courses = [...state.courses, course] as any;
     },
     deleteCourse: (state, { payload: courseId }) => {
       state.courses = state.courses.filter(

@@ -1,21 +1,23 @@
 // app/(Kambaz)/Dashboard/reducer.ts
 
 import { createSlice } from "@reduxjs/toolkit";
-import { enrollments } from "../Database";
-import { v4 as uuidv4 } from "uuid";
 
 const initialState = {
-  enrollments: enrollments,
+  enrollments: [] as any[], // Changed from hardcoded to empty array
 };
 
 const enrollmentsSlice = createSlice({
   name: "enrollments",
   initialState,
   reducers: {
+    setEnrollments: (state, { payload }) => { // Added this action
+      state.enrollments = payload;
+    },
+    
     enrollInCourse: (state, { payload }) => {
       const { userId, courseId } = payload;
       const newEnrollment = {
-        _id: uuidv4(),
+        _id: `${userId}-${courseId}`,
         user: userId,
         course: courseId,
       };
@@ -32,5 +34,5 @@ const enrollmentsSlice = createSlice({
   },
 });
 
-export const { enrollInCourse, unenrollFromCourse } = enrollmentsSlice.actions;
+export const { setEnrollments, enrollInCourse, unenrollFromCourse } = enrollmentsSlice.actions; // Export setEnrollments
 export default enrollmentsSlice.reducer;
