@@ -26,14 +26,17 @@ export default function Modules() {
     dispatch(setModules([...modules, module]));
   };
   const onRemoveModule = async (moduleId: string) => {
-    await client.deleteModule(moduleId);
-    dispatch(setModules(modules.filter((m: any) => m._id !== moduleId)));
-  };
-    const onUpdateModule = async (module: any) => {
-    await client.updateModule(module);
-    const newModules = modules.map((m: any) => m._id === module._id ? module : m );
-    dispatch(setModules(newModules));
-  };
+  await client.deleteModule(cid as string, moduleId);
+  dispatch(setModules(modules.filter((m: any) => m._id !== moduleId)));
+};
+
+const onUpdateModule = async (module: any) => {
+  await client.updateModule(cid as string, module);
+  const newModules = modules.map((m: any) =>
+    m._id === module._id ? module : m
+  );
+  dispatch(setModules(newModules));
+};
   const dispatch = useDispatch();
     const fetchModules = async () => {
     const modules = await client.findModulesForCourse(cid as string);
@@ -91,7 +94,7 @@ export default function Modules() {
                       />
                       <FaTrash 
                         className="text-danger me-2 mb-1" 
-                        onClick={() => dispatch(deleteModule(module._id))}
+                        onClick={() => onRemoveModule(module._id)}
                         style={{ cursor: "pointer" }}
                       />
                     </>

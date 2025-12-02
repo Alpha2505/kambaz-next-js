@@ -69,17 +69,28 @@ export default function Dashboard() {
     );
   };
 
-  // Handle enroll
-  const handleEnroll = (courseId: string) => {
-    if (!currentUser) return;
+// NEW - calls API then updates Redux state
+const handleEnroll = async (courseId: string) => {
+  if (!currentUser) return;
+  try {
+    await client.enrollIntoCourse(currentUser._id, courseId);
     dispatch(enrollInCourse({ userId: currentUser._id, courseId }));
-  };
+  } catch (error) {
+    console.error("Failed to enroll:", error);
+    alert("Failed to enroll in course");
+  }
+};
 
-  // Handle unenroll
-  const handleUnenroll = (courseId: string) => {
-    if (!currentUser) return;
+const handleUnenroll = async (courseId: string) => {
+  if (!currentUser) return;
+  try {
+    await client.unenrollFromCourse(currentUser._id, courseId);
     dispatch(unenrollFromCourse({ userId: currentUser._id, courseId }));
-  };
+  } catch (error) {
+    console.error("Failed to unenroll:", error);
+    alert("Failed to unenroll from course");
+  }
+};
 
   // Filter courses based on toggle
   // When showAllCourses is FALSE: show only enrolled courses
@@ -220,9 +231,9 @@ export default function Dashboard() {
                           <>
                             <Button variant="primary"> Go </Button>
                             <button 
-                              onClick={(event) => {
-                                event.preventDefault();
-                                handleUnenroll(course._id);
+                              onClick={async (event) => {
+    event.preventDefault();
+    await handleUnenroll(course._id);
                               }} 
                               className="btn btn-danger float-end"
                               id={`wd-unenroll-course-${course._id}`}
@@ -232,9 +243,9 @@ export default function Dashboard() {
                           </>
                         ) : (
                           <button 
-                            onClick={(event) => {
-                              event.preventDefault();
-                              handleEnroll(course._id);
+                            onClick={async (event) => {
+    event.preventDefault();
+    await handleEnroll(course._id);
                             }} 
                             className="btn btn-success w-100"
                             id={`wd-enroll-course-${course._id}`}

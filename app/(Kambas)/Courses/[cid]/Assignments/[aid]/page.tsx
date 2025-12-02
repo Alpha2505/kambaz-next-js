@@ -22,6 +22,17 @@ export default function AssignmentEditor() {
     ? assignments.find((a: any) => a._id === aid)
     : null;
   
+  // Helper function to format date for input field (YYYY-MM-DD)
+  const formatDateForInput = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [assignment, setAssignment] = useState<any>(
     existingAssignment || {
       title: "New Assignment",
@@ -40,7 +51,13 @@ export default function AssignmentEditor() {
       return;
     }
     if (existingAssignment) {
-      setAssignment(existingAssignment);
+      // Format dates when loading existing assignment
+      setAssignment({
+        ...existingAssignment,
+        dueDate: formatDateForInput(existingAssignment.dueDate || existingAssignment.availableUntil),
+        availableFromDate: formatDateForInput(existingAssignment.availableFromDate || existingAssignment.availableFrom),
+        availableUntilDate: formatDateForInput(existingAssignment.availableUntilDate || existingAssignment.availableUntil)
+      });
     }
   }, [existingAssignment, isFaculty, router, cid]);
 
@@ -51,13 +68,20 @@ export default function AssignmentEditor() {
     }
     
     try {
+      // Prepare assignment data for server (map field names if needed)
+      const assignmentToSave = {
+        ...assignment,
+        availableFrom: assignment.availableFromDate,
+        availableUntil: assignment.availableUntilDate || assignment.dueDate
+      };
+
       if (isNewAssignment) {
         // Create new assignment on server
-        const newAssignment = await coursesClient.createAssignmentForCourse(cid, assignment);
+        const newAssignment = await coursesClient.createAssignmentForCourse(cid, assignmentToSave);
         dispatch(setAssignments([...assignments, newAssignment]));
       } else {
         // Update existing assignment on server
-        const updatedAssignment = await coursesClient.updateAssignment(assignment);
+        const updatedAssignment = await coursesClient.updateAssignment(assignmentToSave);
         const newAssignments = assignments.map((a: any) => 
           a._id === updatedAssignment._id ? updatedAssignment : a
         );
