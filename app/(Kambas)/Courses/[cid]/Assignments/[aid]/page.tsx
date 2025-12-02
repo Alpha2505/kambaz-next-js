@@ -18,9 +18,9 @@ export default function AssignmentEditor() {
   
   const isFaculty = currentUser?.role === "FACULTY";
   const isNewAssignment = aid === "new";
-  const existingAssignment = !isNewAssignment 
-    ? assignments.find((a: any) => a._id === aid)
-    : null;
+  const existingAssignment = (!isNewAssignment 
+  ? assignments.find((a: any) => a._id === aid)
+  : null) as any;
   
   // Helper function to format date for input field (YYYY-MM-DD)
   const formatDateForInput = (dateString: string) => {
