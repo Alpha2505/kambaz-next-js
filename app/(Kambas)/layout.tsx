@@ -14,21 +14,29 @@ function SessionHandler({ children }: { children: ReactNode }) {
   const { currentUser } = useSelector((state: RootState) => state.accountReducer);
 
   useEffect(() => {
+    // 1. Load from localStorage on first mount
+    const saved = localStorage.getItem("currentUser");
+    if (saved && !currentUser) {
+      dispatch(setCurrentUser(JSON.parse(saved)));
+      return;
+    }
+
+    // 2. If no saved user, fetch session from backend
     const fetchProfile = async () => {
       try {
         const user = await client.profile();
         dispatch(setCurrentUser(user));
-        console.log("User loaded from session:", user.username);
+
+        // Save to localStorage
+        localStorage.setItem("currentUser", JSON.stringify(user));
       } catch (error) {
         console.log("No user logged in");
         dispatch(setCurrentUser(null));
+        localStorage.removeItem("currentUser");
       }
     };
 
-    // Only fetch if we don't have a user yet
-    if (!currentUser) {
-      fetchProfile();
-    }
+    if (!currentUser) fetchProfile();
   }, [currentUser, dispatch]);
 
   return <>{children}</>;
