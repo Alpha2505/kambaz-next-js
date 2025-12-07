@@ -61,12 +61,8 @@ export default function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load all courses
-        const fetchedCourses = await client.fetchAllCourses();
-        dispatch(setCourses(fetchedCourses));
-        
-        // Load enrollments for current user (students only)
-        if (currentUser && !isFaculty) {
+        // Load enrollments for current user (both faculty and students)
+        if (currentUser) {
           try {
             const enrolledCourses = await client.findMyCourses();
             
@@ -78,10 +74,27 @@ export default function Dashboard() {
             }));
             
             dispatch(setEnrollments(userEnrollments));
+            
+            // For faculty, only set courses they're enrolled in (courses they created)
+            // For students, we'll still load all courses but filter by enrollment
+            if (isFaculty) {
+              dispatch(setCourses(enrolledCourses));
+            } else {
+              // Load all courses for students (they can toggle between all and enrolled)
+              const fetchedCourses = await client.fetchAllCourses();
+              dispatch(setCourses(fetchedCourses));
+            }
           } catch (error) {
             console.error("Failed to fetch enrollments:", error);
             dispatch(setEnrollments([]));
+            // Still load all courses if enrollment fetch fails
+            const fetchedCourses = await client.fetchAllCourses();
+            dispatch(setCourses(fetchedCourses));
           }
+        } else {
+          // No user logged in, load all courses
+          const fetchedCourses = await client.fetchAllCourses();
+          dispatch(setCourses(fetchedCourses));
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -123,9 +136,11 @@ export default function Dashboard() {
     }
   };
 
-  // Filter courses based on toggle
+  // Filter courses based on user role and toggle
+  // Faculty: only see courses they created (which they're enrolled in)
+  // Students: see enrolled courses by default, can toggle to see all courses
   const displayedCourses = isFaculty 
-    ? courses // Faculty always sees all courses
+    ? courses.filter((course) => isEnrolled(course._id)) // Faculty only see courses they created (enrolled in)
     : showAllCourses
     ? courses // Show all courses when toggled ON
     : currentUser
@@ -185,7 +200,12 @@ export default function Dashboard() {
       )}
 
       <h2 id="wd-dashboard-published">
-        {showAllCourses ? "All Courses" : "Published Courses"} ({displayedCourses.length})
+        {isFaculty 
+          ? `My Courses (${displayedCourses.length})`
+          : showAllCourses 
+            ? `All Courses (${displayedCourses.length})` 
+            : `My Enrollments (${displayedCourses.length})`
+        }
       </h2> 
       <hr />
 
