@@ -125,63 +125,63 @@ export default function TakeQuiz() {
     }
   };
 
-const handleSubmit = async () => {
-  if (!attempt || !quiz) return;
-  
-  if (!confirm("Are you sure you want to submit this quiz? You cannot change your answers after submission.")) {
-    return;
-  }
+  const handleSubmit = async () => {
+    if (!attempt || !quiz) return;
+    
+    if (!confirm("Are you sure you want to submit this quiz? You cannot change your answers after submission.")) {
+      return;
+    }
 
-  try {
-    // Calculate score on frontend before submitting
-    let calculatedScore = 0;
-    const answerArray = quiz.questions?.map((question: any, idx: number) => {
-      const userAnswer = answers[idx] ?? null;
-      let isCorrect = false;
-      
-      if (question.type === "multipleChoice") {
-        isCorrect = userAnswer === question.correctAnswer;
-      } else if (question.type === "trueFalse") {
-        isCorrect = userAnswer === question.correctAnswer;
-      } else if (question.type === "fillInBlank") {
-        if (Array.isArray(userAnswer)) {
-          isCorrect = question.possibleAnswers?.every((correctAns: string, index: number) => {
-            const userAnswerStr = String(userAnswer[index] || "").trim().toLowerCase();
-            const correctAnswerStr = String(correctAns || "").trim().toLowerCase();
-            return userAnswerStr === correctAnswerStr;
-          }) || false;
-        } else {
-          const userAnswerStr = String(userAnswer || "").trim().toLowerCase();
-          const correctAnswerStr = String(question.possibleAnswers?.[0] || "").trim().toLowerCase();
-          isCorrect = userAnswerStr === correctAnswerStr;
+    try {
+      // Calculate score on frontend before submitting
+      let calculatedScore = 0;
+      const answerArray = quiz.questions?.map((question: any, idx: number) => {
+        const userAnswer = answers[idx] ?? null;
+        let isCorrect = false;
+        
+        if (question.type === "multipleChoice") {
+          isCorrect = userAnswer === question.correctAnswer;
+        } else if (question.type === "trueFalse") {
+          isCorrect = userAnswer === question.correctAnswer;
+        } else if (question.type === "fillInBlank") {
+          if (Array.isArray(userAnswer)) {
+            isCorrect = question.possibleAnswers?.every((correctAns: string, index: number) => {
+              const userAnswerStr = String(userAnswer[index] || "").trim().toLowerCase();
+              const correctAnswerStr = String(correctAns || "").trim().toLowerCase();
+              return userAnswerStr === correctAnswerStr;
+            }) || false;
+          } else {
+            const userAnswerStr = String(userAnswer || "").trim().toLowerCase();
+            const correctAnswerStr = String(question.possibleAnswers?.[0] || "").trim().toLowerCase();
+            isCorrect = userAnswerStr === correctAnswerStr;
+          }
         }
+        
+        // Add points if correct
+        const pointsEarned = isCorrect ? (question.points || 0) : 0;
+        calculatedScore += pointsEarned;
+        
+        // Return answer with points earned for this question
+        return {
+          answer: userAnswer,
+          pointsEarned: pointsEarned,
+          totalScore: calculatedScore  // Include running total
+        };
+      }) || [];
+      
+      // Add total score to the last element or as a separate property
+      if (answerArray.length > 0) {
+        answerArray[answerArray.length - 1].totalScore = calculatedScore;
       }
       
-      // Add points if correct
-      const pointsEarned = isCorrect ? (question.points || 0) : 0;
-      calculatedScore += pointsEarned;
-      
-      // Return answer with points earned for this question
-      return {
-        answer: userAnswer,
-        pointsEarned: pointsEarned,
-        totalScore: calculatedScore  // Include running total
-      };
-    }) || [];
-    
-    // Add total score to the last element or as a separate property
-    if (answerArray.length > 0) {
-      answerArray[answerArray.length - 1].totalScore = calculatedScore;
+      const submittedAttempt = await coursesClient.submitQuizAttempt(attempt._id, answerArray as any);
+      setAttempt(submittedAttempt);
+      setSubmitted(true);
+    } catch (error) {
+      console.error("Failed to submit quiz:", error);
+      alert("Failed to submit quiz. Please try again.");
     }
-    
-    const submittedAttempt = await coursesClient.submitQuizAttempt(attempt._id, answerArray as any);
-    setAttempt(submittedAttempt);
-    setSubmitted(true);
-  } catch (error) {
-    console.error("Failed to submit quiz:", error);
-    alert("Failed to submit quiz. Please try again.");
-  }
-};
+  };
 
   // Calculate results if submitted
   const results: Record<number, { correct: boolean; userAnswer: any; correctAnswer: any }> = {};
@@ -589,18 +589,33 @@ const handleSubmit = async () => {
                 return (
                   <div
                     key={index}
-                    onClick={() => !submitted && setCurrentQuestionIndex(index)}
+                    onClick={() => setCurrentQuestionIndex(index)}
                     style={{
                       padding: "10px",
                       marginBottom: "8px",
                       borderRadius: "4px",
-                      cursor: submitted ? "default" : "pointer",
+                      cursor: "pointer",
                       backgroundColor: isCurrent ? "#007bff" : 
                                       submitted ? (isCorrect ? "#d4edda" : "#f8d7da") : 
                                       hasAnswer ? "#e7f3ff" : "white",
                       border: isCurrent ? "2px solid #0056b3" : "1px solid #ddd",
                       color: isCurrent ? "white" : "inherit",
-                      fontWeight: isCurrent ? "bold" : "normal"
+                      fontWeight: isCurrent ? "bold" : "normal",
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isCurrent) {
+                        e.currentTarget.style.backgroundColor = submitted 
+                          ? (isCorrect ? "#c3e6cb" : "#f5c6cb")
+                          : hasAnswer ? "#d1ecf1" : "#e9ecef";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isCurrent) {
+                        e.currentTarget.style.backgroundColor = submitted 
+                          ? (isCorrect ? "#d4edda" : "#f8d7da")
+                          : hasAnswer ? "#e7f3ff" : "white";
+                      }
                     }}
                   >
                     Question {index + 1}

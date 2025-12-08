@@ -5,13 +5,14 @@ import { useSelector, useDispatch } from "react-redux";
 import { setQuizzes, deleteQuiz, updateQuiz } from "./reducer";
 import { RootState } from "../../../store";
 import { BsGripVertical, BsPlus } from "react-icons/bs";
-import { FaSearch, FaCaretDown, FaTrash } from "react-icons/fa";
+import { FaSearch, FaCaretDown, FaTrash, FaBan } from "react-icons/fa";
 import { IoEllipsisVertical } from "react-icons/io5";
 import { FaCheckCircle } from "react-icons/fa";
 import { MdOutlineQuiz } from "react-icons/md";
 import { Modal, Button, Dropdown } from "react-bootstrap";
 import { useState, useEffect, useRef } from "react";
 import * as coursesClient from "../../client";
+import GreenCheckmark from "../Modules/GreenCheckmark";
 
 export default function Quizzes() {
   const params = useParams();
@@ -303,9 +304,10 @@ export default function Quizzes() {
                         title={isPublished ? "Unpublish" : "Publish"}
                       >
                         {isPublished ? (
-                          <span className="text-success">✅</span>
+                          <span className="text-success"><GreenCheckmark /></span>
                         ) : (
-                          <span className="text-danger">🚫</span>
+                          <span className="text-danger"><FaBan style={{ color: "#dc3545" }} />
+</span>
                         )}
                       </button>
                     )}

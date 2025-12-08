@@ -62,4 +62,4 @@ export default function CourseStatus() {
       </Button>
     </div>
   );
-}
+} 
