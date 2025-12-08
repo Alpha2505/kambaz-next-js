@@ -230,6 +230,7 @@ export default function QuizEditor() {
           quiz={quiz} 
           setQuiz={setQuiz}
           onSave={() => handleSave(false)}
+          onSaveAndPublish={() => handleSave(true)}
           onCancel={handleCancel}
         />
       )}

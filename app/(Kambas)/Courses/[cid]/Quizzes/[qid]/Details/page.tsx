@@ -60,147 +60,224 @@ export default function QuizDetails() {
   return (
     <div style={{ padding: "40px", maxWidth: "1000px", margin: "0 auto" }}>
       {/* Header with buttons */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
-        <h1>{quiz.title}</h1>
-        <div style={{ display: "flex", gap: "10px" }}>
-          {isFaculty ? (
-            <>
-              <Button 
-                variant="outline-secondary"
-                onClick={() => router.push(`/Courses/${cid}/Quizzes/${qid}/Preview`)}
-              >
-                Preview
-              </Button>
-              <Button 
-                variant="primary"
-                onClick={() => router.push(`/Courses/${cid}/Quizzes/${qid}/Edit`)}
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
+      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: "30px", gap: "10px" }}>
+        {isFaculty ? (
+          <>
             <Button 
-              variant="primary"
-              onClick={async () => {
-                // Check if quiz is available
-                const now = new Date();
-                const availableFrom = quiz.availableFrom ? new Date(quiz.availableFrom) : null;
-                const availableUntil = quiz.availableUntil ? new Date(quiz.availableUntil) : null;
-                
-                if (availableFrom && now < availableFrom) {
-                  alert(`This quiz is not available until ${formatDate(quiz.availableFrom)}`);
-                  return;
-                }
-                
-                if (availableUntil && now > availableUntil) {
-                  alert("This quiz is no longer available.");
-                  return;
-                }
-                
-                if (!quiz.published) {
-                  alert("This quiz is not published yet.");
-                  return;
-                }
-                
-                router.push(`/Courses/${cid}/Quizzes/${qid}/Take`);
-              }}
+              variant="outline-secondary"
+              onClick={() => router.push(`/Courses/${cid}/Quizzes/${qid}/Preview`)}
             >
-              Start Quiz
+              Preview
             </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Quiz Properties */}
-      <div style={{ marginBottom: "30px" }}>
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "250px" }}>Quiz Type:</strong>
-          <span>{quiz.quizType || "Graded Quiz"}</span>
-        </div>
-        
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "250px" }}>Points:</strong>
-          <span>{quizPoints}</span>
-        </div>
-        
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "250px" }}>Assignment Group:</strong>
-          <span>{quiz.assignmentGroup || "Quizzes"}</span>
-        </div>
-        
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "250px" }}>Shuffle Answers:</strong>
-          <span>{quiz.shuffleAnswers !== false ? "Yes" : "No"}</span>
-        </div>
-        
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "250px" }}>Time Limit:</strong>
-          <span>{quiz.timeLimit || 20} Minutes</span>
-        </div>
-        
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "250px" }}>Multiple Attempts:</strong>
-          <span>{quiz.multipleAttempts ? "Yes" : "No"}</span>
-        </div>
-        
-        {quiz.multipleAttempts && (
-          <div style={{ marginBottom: "15px", display: "flex", alignItems: "center", marginLeft: "250px" }}>
-            <strong style={{ width: "200px" }}>How Many Attempts:</strong>
-            <span>{quiz.attemptsAllowed || 1}</span>
-          </div>
+            <Button 
+              variant="outline-secondary"
+              onClick={() => router.push(`/Courses/${cid}/Quizzes/${qid}/Edit`)}
+            >
+              <span style={{ marginRight: "5px" }}></span> Edit
+            </Button>
+          </>
+        ) : (
+          <Button 
+            variant="primary"
+            onClick={async () => {
+              // Check if quiz is available
+              const now = new Date();
+              const availableFrom = quiz.availableFrom ? new Date(quiz.availableFrom) : null;
+              const availableUntil = quiz.availableUntil ? new Date(quiz.availableUntil) : null;
+              
+              if (availableFrom && now < availableFrom) {
+                alert(`This quiz is not available until ${formatDate(quiz.availableFrom)}`);
+                return;
+              }
+              
+              if (availableUntil && now > availableUntil) {
+                alert("This quiz is no longer available.");
+                return;
+              }
+              
+              if (!quiz.published) {
+                alert("This quiz is not published yet.");
+                return;
+              }
+              
+              router.push(`/Courses/${cid}/Quizzes/${qid}/Take`);
+            }}
+          >
+            Start Quiz
+          </Button>
         )}
-        
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "250px" }}>Show Correct Answers:</strong>
-          <span>{quiz.showCorrectAnswers || "Immediately"}</span>
-        </div>
-        
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "250px" }}>Access Code:</strong>
-          <span>{quiz.accessCode || "No access code"}</span>
-        </div>
-        
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "250px" }}>One Question at a Time:</strong>
-          <span>{quiz.oneQuestionAtATime !== false ? "Yes" : "No"}</span>
-        </div>
-        
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "250px" }}>Webcam Required:</strong>
-          <span>{quiz.webcamRequired ? "Yes" : "No"}</span>
-        </div>
-        
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "250px" }}>Lock Questions After Answering:</strong>
-          <span>{quiz.lockQuestionsAfterAnswering ? "Yes" : "No"}</span>
-        </div>
       </div>
 
-      <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "30px 0" }} />
+      {/* Quiz Details Box */}
+      <div style={{ 
+        border: "1px dashed #ccc", 
+        padding: "30px", 
+        borderRadius: "8px",
+        backgroundColor: "#f9f9f9"
+      }}>
+        {/* Quiz Title */}
+        <h2 style={{ marginBottom: "30px", fontSize: "28px" }}>{quiz.title}</h2>
 
-      {/* Dates Section */}
-      <div>
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "150px" }}>Due:</strong>
-          <span>{formatDate(quiz.dueDate || quiz.availableUntil)}</span>
-        </div>
-        
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "150px" }}>For:</strong>
-          <span>Everyone</span>
-        </div>
-        
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "150px" }}>Available from:</strong>
-          <span>{formatDate(quiz.availableFrom)}</span>
-        </div>
-        
-        <div style={{ marginBottom: "15px", display: "flex", alignItems: "center" }}>
-          <strong style={{ width: "150px" }}>Until:</strong>
-          <span>{formatDate(quiz.availableUntil)}</span>
+        {/* Quiz Properties Table */}
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <tbody>
+            <tr>
+              <td style={{  paddingRight: "40px", paddingBottom: "15px", fontWeight: "bold", color: "#666" }}>
+                Quiz Type
+              </td>
+              <td style={{ paddingBottom: "15px", color: "#333" }}>
+                {quiz.quizType || "Graded Quiz"}
+              </td>
+            </tr>
+            
+            <tr>
+              <td style={{  paddingRight: "40px", paddingBottom: "15px", fontWeight: "bold", color: "#666" }}>
+                Points
+              </td>
+              <td style={{ paddingBottom: "15px", color: "#333" }}>
+                {quizPoints}
+              </td>
+            </tr>
+            
+            <tr>
+              <td style={{  paddingRight: "40px", paddingBottom: "15px", fontWeight: "bold", color: "#666" }}>
+                Assignment Group
+              </td>
+              <td style={{ paddingBottom: "15px", color: "#333" }}>
+                {quiz.assignmentGroup || "QUIZZES"}
+              </td>
+            </tr>
+            
+            <tr>
+              <td style={{  paddingRight: "40px", paddingBottom: "15px", fontWeight: "bold", color: "#666" }}>
+                Shuffle Answers
+              </td>
+              <td style={{ paddingBottom: "15px", color: "#333" }}>
+                {quiz.shuffleAnswers !== false ? "Yes" : "No"}
+              </td>
+            </tr>
+            
+            <tr>
+              <td style={{  paddingRight: "40px", paddingBottom: "15px", fontWeight: "bold", color: "#666" }}>
+                Time Limit
+              </td>
+              <td style={{ paddingBottom: "15px", color: "#333" }}>
+                {quiz.timeLimit || 20} Minutes
+              </td>
+            </tr>
+            
+            <tr>
+              <td style={{  paddingRight: "40px", paddingBottom: "15px", fontWeight: "bold", color: "#666" }}>
+                Multiple Attempts
+              </td>
+              <td style={{ paddingBottom: "15px", color: "#333" }}>
+                {quiz.multipleAttempts ? "Yes" : "No"}
+              </td>
+            </tr>
+            
+            <tr>
+              <td style={{  paddingRight: "40px", paddingBottom: "15px", fontWeight: "bold", color: "#666" }}>
+                View Responses
+              </td>
+              <td style={{ paddingBottom: "15px", color: "#333" }}>
+                {quiz.viewResponses || "Always"}
+              </td>
+            </tr>
+            
+            <tr>
+              <td style={{  paddingRight: "40px", paddingBottom: "15px", fontWeight: "bold", color: "#666" }}>
+                Show Correct Answers
+              </td>
+              <td style={{ paddingBottom: "15px", color: "#333" }}>
+                {quiz.showCorrectAnswers || "Immediately"}
+              </td>
+            </tr>
+            
+            <tr>
+              <td style={{  paddingRight: "40px", paddingBottom: "15px", fontWeight: "bold", color: "#666" }}>
+                One Question at a Time
+              </td>
+              <td style={{ paddingBottom: "15px", color: "#333" }}>
+                {quiz.oneQuestionAtATime !== false ? "Yes" : "No"}
+              </td>
+            </tr>
+            
+            <tr>
+              <td style={{  paddingRight: "40px", paddingBottom: "15px", fontWeight: "bold", color: "#666" }}>
+                Require Respondus LockDown Browser
+              </td>
+              <td style={{ paddingBottom: "15px", color: "#333" }}>
+                {quiz.requireRespondusLockDown ? "Yes" : "No"}
+              </td>
+            </tr>
+            
+            <tr>
+              <td style={{  paddingRight: "40px", paddingBottom: "15px", fontWeight: "bold", color: "#666" }}>
+                Required to View Quiz Results
+              </td>
+              <td style={{ paddingBottom: "15px", color: "#333" }}>
+                {quiz.requiredToViewQuizResults ? "Yes" : "No"}
+              </td>
+            </tr>
+            
+            <tr>
+              <td style={{  paddingRight: "40px", paddingBottom: "15px", fontWeight: "bold", color: "#666" }}>
+                Webcam Required
+              </td>
+              <td style={{ paddingBottom: "15px", color: "#333" }}>
+                {quiz.webcamRequired ? "Yes" : "No"}
+              </td>
+            </tr>
+            
+            <tr>
+              <td style={{  paddingRight: "40px", paddingBottom: "15px", fontWeight: "bold", color: "#666" }}>
+                Lock Questions After Answering
+              </td>
+              <td style={{ paddingBottom: "15px", color: "#333" }}>
+                {quiz.lockQuestionsAfterAnswering ? "Yes" : "No"}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Dates Table */}
+        <div style={{ marginTop: "40px" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "2px solid #ccc" }}>
+                <th style={{ textAlign: "left", paddingBottom: "10px", paddingRight: "20px", fontWeight: "bold", color: "#666" }}>
+                  Due
+                </th>
+                <th style={{ textAlign: "left", paddingBottom: "10px", paddingRight: "20px", fontWeight: "bold", color: "#666" }}>
+                  For
+                </th>
+                <th style={{ textAlign: "left", paddingBottom: "10px", paddingRight: "20px", fontWeight: "bold", color: "#666" }}>
+                  Available from
+                </th>
+                <th style={{ textAlign: "left", paddingBottom: "10px", fontWeight: "bold", color: "#666" }}>
+                  Until
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style={{ paddingTop: "15px", paddingRight: "20px", color: "#333" }}>
+                  {formatDate(quiz.dueDate || quiz.availableUntil)}
+                </td>
+                <td style={{ paddingTop: "15px", paddingRight: "20px", color: "#333" }}>
+                  Everyone
+                </td>
+                <td style={{ paddingTop: "15px", paddingRight: "20px", color: "#333" }}>
+                  {formatDate(quiz.availableFrom)}
+                </td>
+                <td style={{ paddingTop: "15px", color: "#333" }}>
+                  {formatDate(quiz.availableUntil)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   );
 }
-

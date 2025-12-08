@@ -65,7 +65,9 @@ export default function TakeQuiz() {
           setSubmitted(true);
           const answerMap: Record<number, any> = {};
           latestAttempt.answers?.forEach((ans: any, idx: number) => {
-            answerMap[idx] = ans;
+            // Handle both old format (raw answers) and new format (objects with answer property)
+            const actualAnswer = typeof ans === 'object' && ans.answer !== undefined ? ans.answer : ans;
+            answerMap[idx] = actualAnswer;
           });
           setAnswers(answerMap);
         } else if (latestAttempt && !latestAttempt.completed) {
@@ -73,7 +75,9 @@ export default function TakeQuiz() {
           setAttempt(latestAttempt);
           const answerMap: Record<number, any> = {};
           latestAttempt.answers?.forEach((ans: any, idx: number) => {
-            answerMap[idx] = ans;
+            // Handle both old format (raw answers) and new format (objects with answer property)
+            const actualAnswer = typeof ans === 'object' && ans.answer !== undefined ? ans.answer : ans;
+            answerMap[idx] = actualAnswer;
           });
           setAnswers(answerMap);
         } else {
@@ -121,26 +125,68 @@ export default function TakeQuiz() {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!attempt || !quiz) return;
-    
-    if (!confirm("Are you sure you want to submit this quiz? You cannot change your answers after submission.")) {
-      return;
-    }
+const handleSubmit = async () => {
+  if (!attempt || !quiz) return;
+  
+  if (!confirm("Are you sure you want to submit this quiz? You cannot change your answers after submission.")) {
+    return;
+  }
 
-    try {
-      const answerArray = quiz.questions?.map((_: any, idx: number) => answers[idx] ?? null) || [];
-      const submittedAttempt = await coursesClient.submitQuizAttempt(attempt._id, answerArray);
-      setAttempt(submittedAttempt);
-      setSubmitted(true);
-    } catch (error) {
-      console.error("Failed to submit quiz:", error);
-      alert("Failed to submit quiz. Please try again.");
+  try {
+    // Calculate score on frontend before submitting
+    let calculatedScore = 0;
+    const answerArray = quiz.questions?.map((question: any, idx: number) => {
+      const userAnswer = answers[idx] ?? null;
+      let isCorrect = false;
+      
+      if (question.type === "multipleChoice") {
+        isCorrect = userAnswer === question.correctAnswer;
+      } else if (question.type === "trueFalse") {
+        isCorrect = userAnswer === question.correctAnswer;
+      } else if (question.type === "fillInBlank") {
+        if (Array.isArray(userAnswer)) {
+          isCorrect = question.possibleAnswers?.every((correctAns: string, index: number) => {
+            const userAnswerStr = String(userAnswer[index] || "").trim().toLowerCase();
+            const correctAnswerStr = String(correctAns || "").trim().toLowerCase();
+            return userAnswerStr === correctAnswerStr;
+          }) || false;
+        } else {
+          const userAnswerStr = String(userAnswer || "").trim().toLowerCase();
+          const correctAnswerStr = String(question.possibleAnswers?.[0] || "").trim().toLowerCase();
+          isCorrect = userAnswerStr === correctAnswerStr;
+        }
+      }
+      
+      // Add points if correct
+      const pointsEarned = isCorrect ? (question.points || 0) : 0;
+      calculatedScore += pointsEarned;
+      
+      // Return answer with points earned for this question
+      return {
+        answer: userAnswer,
+        pointsEarned: pointsEarned,
+        totalScore: calculatedScore  // Include running total
+      };
+    }) || [];
+    
+    // Add total score to the last element or as a separate property
+    if (answerArray.length > 0) {
+      answerArray[answerArray.length - 1].totalScore = calculatedScore;
     }
-  };
+    
+    const submittedAttempt = await coursesClient.submitQuizAttempt(attempt._id, answerArray as any);
+    setAttempt(submittedAttempt);
+    setSubmitted(true);
+  } catch (error) {
+    console.error("Failed to submit quiz:", error);
+    alert("Failed to submit quiz. Please try again.");
+  }
+};
 
   // Calculate results if submitted
   const results: Record<number, { correct: boolean; userAnswer: any; correctAnswer: any }> = {};
+  let calculatedScore = 0;
+  
   if (submitted && quiz && attempt) {
     quiz.questions?.forEach((question: any, index: number) => {
       const userAnswer = answers[index];
@@ -151,10 +197,24 @@ export default function TakeQuiz() {
       } else if (question.type === "trueFalse") {
         isCorrect = userAnswer === question.correctAnswer;
       } else if (question.type === "fillInBlank") {
-        const userAnswerStr = String(userAnswer || "").trim().toLowerCase();
-        isCorrect = question.possibleAnswers?.some((ans: string) => 
-          ans.trim().toLowerCase() === userAnswerStr
-        ) || false;
+        if (Array.isArray(userAnswer)) {
+          // Multiple blanks - check if ALL answers match their corresponding possible answers
+          isCorrect = question.possibleAnswers?.every((correctAns: string, idx: number) => {
+            const userAnswerStr = String(userAnswer[idx] || "").trim().toLowerCase();
+            const correctAnswerStr = String(correctAns || "").trim().toLowerCase();
+            return userAnswerStr === correctAnswerStr;
+          }) || false;
+        } else {
+          // Single blank - check against first possible answer
+          const userAnswerStr = String(userAnswer || "").trim().toLowerCase();
+          const correctAnswerStr = String(question.possibleAnswers?.[0] || "").trim().toLowerCase();
+          isCorrect = userAnswerStr === correctAnswerStr;
+        }
+      }
+      
+      // Add points if correct
+      if (isCorrect) {
+        calculatedScore += question.points || 0;
       }
       
       results[index] = {
@@ -293,23 +353,59 @@ export default function TakeQuiz() {
 
         {question.type === "fillInBlank" && (
           <div>
-            <input
-              type="text"
-              value={userAnswer || ""}
-              onChange={(e) => !submitted && handleAnswerChange(index, e.target.value)}
-              disabled={submitted}
-              placeholder="Enter your answer"
-              style={{
-                width: "100%",
-                padding: "10px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "16px",
-                backgroundColor: submitted ? "#f5f5f5" : "white"
-              }}
-            />
+            {question.possibleAnswers && question.possibleAnswers.length > 0 ? (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                {question.possibleAnswers.map((_: string, blankIndex: number) => (
+                  <div key={blankIndex} style={{ flex: "0 0 auto" }}>
+                    <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", color: "#666" }}>
+                      Blank {blankIndex + 1}:
+                    </label>
+                    <input
+                      type="text"
+                      value={Array.isArray(userAnswer) ? (userAnswer[blankIndex] || "") : (blankIndex === 0 ? userAnswer || "" : "")}
+                      onChange={(e) => {
+                        if (!submitted) {
+                          const newAnswers = Array.isArray(userAnswer) 
+                            ? [...userAnswer] 
+                            : new Array(question.possibleAnswers.length).fill("");
+                          newAnswers[blankIndex] = e.target.value;
+                          handleAnswerChange(index, newAnswers);
+                        }
+                      }}
+                      disabled={submitted}
+                      placeholder={`Answer ${blankIndex + 1}`}
+                      style={{
+                        width: "150px",
+                        padding: "8px",
+                        border: "1px solid #ddd",
+                        borderRadius: "4px",
+                        fontSize: "14px",
+                        backgroundColor: submitted ? "#f5f5f5" : "white"
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <input
+                type="text"
+                value={userAnswer || ""}
+                onChange={(e) => !submitted && handleAnswerChange(index, e.target.value)}
+                disabled={submitted}
+                placeholder="Enter your answer"
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                  fontSize: "16px",
+                  backgroundColor: submitted ? "#f5f5f5" : "white"
+                }}
+              />
+            )}
+            
             {showResults && (
-              <div style={{ marginTop: "10px", padding: "10px", backgroundColor: "#f8f9fa", borderRadius: "4px" }}>
+              <div style={{ marginTop: "15px", padding: "10px", backgroundColor: "#f8f9fa", borderRadius: "4px" }}>
                 <strong>Correct Answer(s): </strong>
                 {question.possibleAnswers?.join(", ")}
               </div>
@@ -329,7 +425,9 @@ export default function TakeQuiz() {
             {question.type === "multipleChoice" 
               ? question.choices?.[userAnswer] || "No answer"
               : question.type === "trueFalse"
-              ? (userAnswer ? "True" : "False")
+              ? (userAnswer !== undefined ? (userAnswer ? "True" : "False") : "No answer")
+              : Array.isArray(userAnswer) 
+              ? userAnswer.join(", ") || "No answer"
               : userAnswer || "No answer"}
           </div>
         )}
@@ -369,34 +467,37 @@ export default function TakeQuiz() {
           <h1>{quiz.title}</h1>
           {submitted && attempt && (
             <div style={{ marginTop: "10px" }}>
-              <h3 style={{ color: attempt.score === totalPoints ? "#28a745" : "#dc3545" }}>
-                Score: {attempt.score} / {totalPoints} ({Math.round((attempt.score / totalPoints) * 100)}%)
+              <h3 style={{ color: (attempt.score || calculatedScore) === totalPoints ? "#28a745" : "#dc3545" }}>
+                Score: {attempt.score || calculatedScore} / {totalPoints} ({Math.round(((attempt.score || calculatedScore) / totalPoints) * 100)}%)
               </h3>
             </div>
           )}
         </div>
         {submitted && (
-          <Button 
-            variant="primary"
-            onClick={() => {
-              // Check if can retake
-              if (quiz.multipleAttempts) {
-                const canRetake = (attempt?.attemptNumber || 0) < (quiz.attemptsAllowed || 1);
-                if (canRetake) {
-                  router.push(`/Courses/${cid}/Quizzes/${qid}/Take`);
-                } else {
-                  alert("You have reached the maximum number of attempts for this quiz.");
-                }
-              } else {
-                alert("Multiple attempts are not allowed for this quiz.");
-              }
-            }}
-          >
-            {quiz.multipleAttempts && (attempt?.attemptNumber || 0) < (quiz.attemptsAllowed || 1) 
-              ? "Retake Quiz" 
-              : "View Results"}
-          </Button>
-        )}
+  <div style={{ display: "flex", gap: "10px" }}>
+    {/* Show Retake button only if multiple attempts allowed AND attempts remaining */}
+    {quiz.multipleAttempts && (attempt?.attemptNumber || 0) < (quiz.attemptsAllowed || 1) && (
+      <Button 
+        variant="success"
+        onClick={async () => {
+          if (confirm(`Start attempt ${(attempt?.attemptNumber || 0) + 1} of ${quiz.attemptsAllowed || 1}?`)) {
+            window.location.reload();
+          }
+        }}
+      >
+        Retake Quiz (Attempt {(attempt?.attemptNumber || 0) + 1} of {quiz.attemptsAllowed || 1})
+      </Button>
+    )}
+    
+    {/* Always show back button */}
+    <Button 
+      variant="outline-primary"
+      onClick={() => router.push(`/Courses/${cid}/Quizzes/${qid}/Details`)}
+    >
+      Back to Quiz Details
+    </Button>
+  </div>
+)}
       </div>
 
       {/* Preview Banner for Faculty */}
@@ -564,7 +665,7 @@ export default function TakeQuiz() {
         }}>
           <h3>Quiz Results</h3>
           <p>
-            You scored <strong>{attempt.score} out of {totalPoints}</strong> points ({Math.round((attempt.score / totalPoints) * 100)}%).
+            You scored <strong>{attempt.score || calculatedScore} out of {totalPoints}</strong> points ({Math.round(((attempt.score || calculatedScore) / totalPoints) * 100)}%).
           </p>
           <p>
             Correct: {Object.values(results).filter(r => r.correct).length} / {quiz.questions?.length || 0}
@@ -582,4 +683,3 @@ export default function TakeQuiz() {
     </div>
   );
 }
-

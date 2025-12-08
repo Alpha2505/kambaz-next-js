@@ -65,15 +65,28 @@ export default function Quizzes() {
     fetchStudentScores();
   }, [quizzes, cid, isFaculty, currentUser]);
   
-  // Filter quizzes based on search term
-  const filteredQuizzes = courseQuizzes.filter((quiz: any) => {
-    if (!searchTerm) return true;
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      quiz.title?.toLowerCase().includes(searchLower) ||
-      quiz.description?.toLowerCase().includes(searchLower)
-    );
-  });
+  // Filter quizzes based on search term and published status
+  const filteredQuizzes = courseQuizzes
+    .filter((quiz: any) => {
+      // For students and TAs, only show published quizzes
+      if (!isFaculty && !quiz.published) {
+        return false;
+      }
+      
+      if (!searchTerm) return true;
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        quiz.title?.toLowerCase().includes(searchLower) ||
+        quiz.description?.toLowerCase().includes(searchLower)
+      );
+    })
+    .sort((a: any, b: any) => {
+      // Sort by available date (availableFrom or dueDate)
+      // Use availableFrom first, fall back to dueDate, then to created date
+      const dateA = new Date(a.availableFrom || a.dueDate || a.createdAt || 0);
+      const dateB = new Date(b.availableFrom || b.dueDate || b.createdAt || 0);
+      return dateA.getTime() - dateB.getTime();
+    });
 
   // Function to format date
   const formatDate = (dateString: string) => {
@@ -157,13 +170,14 @@ export default function Quizzes() {
     }
   };
 
-  const handlePublishToggle = async (quiz: any) => {
+  const handlePublishToggle = async (e: React.MouseEvent, quiz: any) => {
+    e.preventDefault();
+    e.stopPropagation();
     const updatedQuiz = { ...quiz, published: !quiz.published };
     const result = await coursesClient.updateQuiz(updatedQuiz);
     dispatch(updateQuiz(result));
     setShowContextMenu(null);
   };
-
 
   // Close context menu when clicking outside
   useEffect(() => {
@@ -173,11 +187,13 @@ export default function Quizzes() {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+    if (showContextMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showContextMenu]);
 
   return (
     <div id="wd-quizzes">
@@ -245,19 +261,21 @@ export default function Quizzes() {
       </div>
       
       {/* Quiz List */}
-      {filteredQuizzes.length === 0 && courseQuizzes.length === 0 ? (
+      {filteredQuizzes.length === 0 ? (
         <div className="text-center py-5 px-3">
           <p className="text-muted">
-            No quizzes available. Click the <strong>+ Quiz</strong> button to add a new quiz.
+            {searchTerm ? (
+              `No quizzes found matching "${searchTerm}"`
+            ) : (
+              isFaculty ? 
+                <>No quizzes available. Click the <strong>+ Quiz</strong> button to add a new quiz.</> :
+                "No published quizzes available."
+            )}
           </p>
         </div>
       ) : (
         <ul id="wd-quiz-list" className="list-group border-start border-success border-5">
-          {filteredQuizzes.length === 0 && searchTerm ? (
-            <li className="list-group-item text-center py-4 text-muted">
-              No quizzes found matching "{searchTerm}"
-            </li>
-          ) : (
+          {(
             filteredQuizzes.map((quiz: any) => {
             const availabilityStatus = getAvailabilityStatus(quiz);
             const isPublished = quiz.published;
@@ -277,15 +295,11 @@ export default function Quizzes() {
                     >
                       {quiz.title}
                     </Link>
-                    {/* Publish/Unpublish toggle */}
+                    {/* Publish/Unpublish toggle - ONLY FOR FACULTY */}
                     {isFaculty && (
                       <button
                         className="btn btn-link p-0 ms-2"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handlePublishToggle(quiz);
-                        }}
+                        onClick={(e) => handlePublishToggle(e, quiz)}
                         title={isPublished ? "Unpublish" : "Publish"}
                       >
                         {isPublished ? (
@@ -294,15 +308,6 @@ export default function Quizzes() {
                           <span className="text-danger">🚫</span>
                         )}
                       </button>
-                    )}
-                    {!isFaculty && (
-                      <span className="ms-2">
-                        {isPublished ? (
-                          <span className="text-success">✅</span>
-                        ) : (
-                          <span className="text-danger">🚫</span>
-                        )}
-                      </span>
                     )}
                   </div>
                   <div className="small">
@@ -339,9 +344,9 @@ export default function Quizzes() {
                   </div>
                 </div>
                 
-                {/* Context Menu */}
+                {/* Context Menu - ONLY FOR FACULTY */}
                 {isFaculty && (
-                  <div className="position-relative" ref={contextMenuRef}>
+                  <div className="position-relative">
                     <button
                       className="btn btn-link p-0"
                       onClick={(e) => {
@@ -354,6 +359,7 @@ export default function Quizzes() {
                     </button>
                     {showContextMenu === quiz._id && (
                       <div 
+                        ref={contextMenuRef}
                         className="position-absolute bg-white border shadow-lg rounded"
                         style={{ 
                           right: 0, 
@@ -366,6 +372,7 @@ export default function Quizzes() {
                           className="btn btn-link text-dark text-decoration-none d-block w-100 text-start px-3 py-2"
                           onClick={(e) => {
                             e.preventDefault();
+                            e.stopPropagation();
                             router.push(`/Courses/${cid}/Quizzes/${quiz._id}/Edit`);
                             setShowContextMenu(null);
                           }}
@@ -374,10 +381,7 @@ export default function Quizzes() {
                         </button>
                         <button
                           className="btn btn-link text-dark text-decoration-none d-block w-100 text-start px-3 py-2"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handlePublishToggle(quiz);
-                          }}
+                          onClick={(e) => handlePublishToggle(e, quiz)}
                         >
                           {isPublished ? "Unpublish" : "Publish"}
                         </button>

@@ -84,15 +84,14 @@ export default function QuizDetailsEditor({
         </label>
         <input
           type="number"
-          value={quiz.points || 0}
-          readOnly
+          value={quiz.points ?? 0}
+          onChange={(e) => setQuiz({ ...quiz, points: e.target.value === '' ? 0 : Number(e.target.value) })}
           style={{
             flex: 1,
             padding: "10px",
             border: "1px solid #ccc",
             borderRadius: "4px",
-            fontSize: "16px",
-            backgroundColor: "#f5f5f5"
+            fontSize: "16px"
           }}
         />
         <span style={{ marginLeft: "10px", fontSize: "14px", color: "#666" }}>
@@ -207,6 +206,29 @@ export default function QuizDetailsEditor({
         </div>
       )}
 
+      {/* View Responses */}
+      <div style={{ display: "flex", alignItems: "center", marginBottom: "25px" }}>
+        <label style={{ width: "220px", textAlign: "right", paddingRight: "15px", fontSize: "14px" }}>
+          View Responses
+        </label>
+        <select
+          value={quiz.viewResponses || "Always"}
+          onChange={(e) => setQuiz({ ...quiz, viewResponses: e.target.value })}
+          style={{
+            flex: 1,
+            padding: "10px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            fontSize: "16px"
+          }}
+        >
+          <option value="Always">Always</option>
+          <option value="After Submission">After Submission</option>
+          <option value="After Grading">After Grading</option>
+          <option value="Never">Never</option>
+        </select>
+      </div>
+
       {/* Show Correct Answers */}
       <div style={{ display: "flex", alignItems: "center", marginBottom: "25px" }}>
         <label style={{ width: "220px", textAlign: "right", paddingRight: "15px", fontSize: "14px" }}>
@@ -230,26 +252,6 @@ export default function QuizDetailsEditor({
         </select>
       </div>
 
-      {/* Access Code */}
-      <div style={{ display: "flex", alignItems: "center", marginBottom: "25px" }}>
-        <label style={{ width: "220px", textAlign: "right", paddingRight: "15px", fontSize: "14px" }}>
-          Access Code
-        </label>
-        <input
-          type="text"
-          value={quiz.accessCode || ""}
-          onChange={(e) => setQuiz({ ...quiz, accessCode: e.target.value })}
-          placeholder="Leave blank for no access code"
-          style={{
-            flex: 1,
-            padding: "10px",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            fontSize: "16px"
-          }}
-        />
-      </div>
-
       {/* One Question at a Time */}
       <div style={{ display: "flex", alignItems: "center", marginBottom: "25px" }}>
         <label style={{ width: "220px", textAlign: "right", paddingRight: "15px", fontSize: "14px" }}>
@@ -268,6 +270,48 @@ export default function QuizDetailsEditor({
         >
           <option value="Yes">Yes</option>
           <option value="No">No</option>
+        </select>
+      </div>
+
+      {/* Require Respondus LockDown Browser */}
+      <div style={{ display: "flex", alignItems: "center", marginBottom: "25px" }}>
+        <label style={{ width: "220px", textAlign: "right", paddingRight: "15px", fontSize: "14px" }}>
+          Require Respondus LockDown Browser
+        </label>
+        <select
+          value={quiz.requireRespondusLockDown ? "Yes" : "No"}
+          onChange={(e) => setQuiz({ ...quiz, requireRespondusLockDown: e.target.value === "Yes" })}
+          style={{
+            flex: 1,
+            padding: "10px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            fontSize: "16px"
+          }}
+        >
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+
+      {/* Required to View Quiz Results */}
+      <div style={{ display: "flex", alignItems: "center", marginBottom: "25px" }}>
+        <label style={{ width: "220px", textAlign: "right", paddingRight: "15px", fontSize: "14px" }}>
+          Required to View Quiz Results
+        </label>
+        <select
+          value={quiz.requiredToViewQuizResults ? "Yes" : "No"}
+          onChange={(e) => setQuiz({ ...quiz, requiredToViewQuizResults: e.target.value === "Yes" })}
+          style={{
+            flex: 1,
+            padding: "10px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            fontSize: "16px"
+          }}
+        >
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
         </select>
       </div>
 
@@ -311,6 +355,26 @@ export default function QuizDetailsEditor({
           <option value="No">No</option>
           <option value="Yes">Yes</option>
         </select>
+      </div>
+
+      {/* Access Code */}
+      <div style={{ display: "flex", alignItems: "center", marginBottom: "25px" }}>
+        <label style={{ width: "220px", textAlign: "right", paddingRight: "15px", fontSize: "14px" }}>
+          Access Code
+        </label>
+        <input
+          type="text"
+          value={quiz.accessCode || ""}
+          onChange={(e) => setQuiz({ ...quiz, accessCode: e.target.value })}
+          placeholder="Leave blank for no access code"
+          style={{
+            flex: 1,
+            padding: "10px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            fontSize: "16px"
+          }}
+        />
       </div>
 
       {/* Assign Section - HORIZONTAL WITH BORDERED BOX */}
@@ -434,4 +498,3 @@ export default function QuizDetailsEditor({
     </>
   );
 }
-

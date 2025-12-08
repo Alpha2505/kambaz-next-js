@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BsPlus, BsTrash } from "react-icons/bs";
 import MultipleChoiceEditor from "./questionEditors/MultipleChoiceEditor";
 import TrueFalseEditor from "./questionEditors/TrueFalseEditor";
@@ -10,15 +10,25 @@ export default function QuizQuestionsEditor({
   quiz, 
   setQuiz, 
   onSave, 
-  onCancel 
+  onCancel,
+  onSaveAndPublish 
 }: { 
   quiz: any; 
   setQuiz: (quiz: any) => void; 
   onSave: () => void;
   onCancel: () => void;
+  onSaveAndPublish: () => void;
 }) {
   const [editingQuestionIndex, setEditingQuestionIndex] = useState<number | null>(null);
   const [newQuestionType, setNewQuestionType] = useState<string>("multipleChoice");
+  const [originalQuiz, setOriginalQuiz] = useState<any>(null);
+
+  // Store original quiz state when component mounts
+  useEffect(() => {
+    if (!originalQuiz) {
+      setOriginalQuiz(JSON.parse(JSON.stringify(quiz)));
+    }
+  }, []);
 
   const questions = quiz.questions || [];
   const totalPoints = questions.reduce((sum: number, q: any) => sum + (q.points || 0), 0);
@@ -62,6 +72,10 @@ export default function QuizQuestionsEditor({
   };
 
   const handleCancelEdit = () => {
+    // Restore original quiz state
+    if (originalQuiz) {
+      setQuiz(JSON.parse(JSON.stringify(originalQuiz)));
+    }
     setEditingQuestionIndex(null);
   };
 
@@ -274,7 +288,7 @@ export default function QuizQuestionsEditor({
       {/* Buttons */}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
         <button
-          onClick={onCancel}
+          onClick={handleCancelEdit}
           style={{
             padding: "10px 25px",
             fontSize: "16px",
@@ -301,8 +315,21 @@ export default function QuizQuestionsEditor({
         >
           Save
         </button>
+        <button
+          onClick={onSaveAndPublish}
+          style={{
+            padding: "10px 25px",
+            fontSize: "16px",
+            backgroundColor: "#28a745",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Save & Publish
+        </button>
       </div>
     </div>
   );
 }
-
